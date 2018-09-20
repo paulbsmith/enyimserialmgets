@@ -1,0 +1,72 @@
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<AssemblyVersion Condition=" '$(AssemblyVersion)' == '' ">0.0.1.0</AssemblyVersion>
+		<AssemblyInformalVersion Condition=" '$(AssemblyInformalVersion)' == '' ">0.0.1.0-local</AssemblyInformalVersion>
+	</PropertyGroup>
+
+	<!-- internals -->
+	<PropertyGroup>
+		<BuildDependsOn>_GetCache;_CreateAssemblyInfo;_AddVersion;$(BuildDependsOn)</BuildDependsOn>
+		<CleanDependsOn>_DeleteVersionCache;$(CleanDependsOn)</CleanDependsOn>
+
+		<_GeneratedAssemblyInfoPath>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__versioninfo.cs'))</_GeneratedAssemblyInfoPath>
+		<_VersionCachePath>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__lastversion'))</_VersionCachePath>
+	</PropertyGroup>
+
+	<Target Name="_GetCache">
+		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
+		<ReadLinesFromFile File="$(_VersionCachePath)" ContinueOnError="true">
+			<Output TaskParameter="Lines" PropertyName="_VersionCache"/>
+		</ReadLinesFromFile>
+	</Target>
+
+	<!--
+		assembly info is only regenerated if the version changes
+		this speeds up local builds considerably
+	-->
+	<Target Name="_CreateAssemblyInfo"
+			Condition=" '$(_VersionCache)' != '$(AssemblyVersion):$(AssemblyInformalVersion)' Or '$(Configuration)' == 'Release' ">
+
+		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
+
+		<Message Text="Version: $(AssemblyVersion)" Importance="normal" />
+		<Message Text="Informal Version: $(AssemblyInformalVersion)" Importance="normal" />
+
+		<WriteLinesToFile File="$(_VersionCachePath)" Lines="$(AssemblyVersion):$(AssemblyInformalVersion)" Overwrite="true"/>
+		<WriteLinesToFile File="$(_GeneratedAssemblyInfoPath)" Overwrite="true"
+						  Lines="
+[assembly: System.Reflection.AssemblyVersion(&quot;$(AssemblyVersion)&quot;)]
+[assembly: System.Reflection.AssemblyFileVersion(&quot;$(AssemblyVersion)&quot;)]
+[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(AssemblyInformalVersion)&quot;)]
+" />
+	</Target>
+
+	<Target Name="_AddVersion">
+		<CreateItem Include="$(_GeneratedAssemblyInfoPath)">
+			<Output TaskParameter="Include" ItemName="Compile"/>
+		</CreateItem>
+	</Target>
+
+	<Target Name="_DeleteVersionCache">
+		<Delete Files="$(_GeneratedAssemblyInfoPath);$(_VersionCachePath)" ContinueOnError="true" />
+	</Target>
+</Project>
+
+<!--
+
+	Copyright (c) Attila Kiskó, enyim.com
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+
+-->

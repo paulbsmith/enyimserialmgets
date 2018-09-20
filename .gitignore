@@ -1,0 +1,13 @@
+enyim.snk
+*.user
+*.suo
+*.apikey
+.vs/
+.fake/
+packages/
+bin/
+obj/
+Tester/
+TestResults/
+output/
+TestResult*.xml
