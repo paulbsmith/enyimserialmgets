@@ -832,17 +832,23 @@ namespace Enyim.Caching
 				var node = slice.Key;
 
 				var nodeKeys = slice.Value;
-				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
-				node.Execute(mget);
-				foreach (var kvp in mget.Result)
-				{
-					string original;
-					if (hashed.TryGetValue(kvp.Key, out original))
-					{
-						var result = collector(mget, kvp);
-						retval[original] = result;
-					}
-				}
+                if (node != null && nodeKeys != null && this.pool != null)
+                {
+                    var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
+                    node.Execute(mget);
+                    if (mget != null && mget.Result != null)
+                    {
+                        foreach (var kvp in mget.Result)
+                        {
+                            string original;
+                            if (hashed.TryGetValue(kvp.Key, out original))
+                            {
+                                var result = collector(mget, kvp);
+                                retval[original] = result;
+                            }
+                        }
+                    }
+                }
 			}
 
 			return retval;
